@@ -37,3 +37,6 @@ class Menu extends Component {
 }
 
 export default Menu;
+
+//! The keyExtractor will extract one of the props off each
+//! item in the array/data and use that as a key here
