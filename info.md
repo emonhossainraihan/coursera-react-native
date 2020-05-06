@@ -5,6 +5,10 @@
 
 [react-native](https://reactnavigation.org/docs/getting-started/) said "To finalize installation of react-native-gesture-handler, add the following at the top (make sure it's at the top and there's nothing else before it) of your entry file, such as index.js or App.js:",
 
+## Problem with
+
+- [solve](https://www.coursera.org/learn/react-native/discussions/weeks/2/threads/VObG3wX3TrGmxt8F9_6xxA)
+
 ```js
 import 'react-native-gesture-handler';
 import * as React from 'react';
