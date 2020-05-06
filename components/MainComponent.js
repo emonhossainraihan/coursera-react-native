@@ -8,6 +8,8 @@ import { createDrawerNavigator } from '@react-navigation/drawer';
 import Menu from './MenuComponent';
 import Dishdetail from './DishdetailComponent';
 import Home from './HomeComponent';
+import About from './AboutComponent';
+import Contact from './ContactComponent';
 
 const MenuNavigator = createStackNavigator();
 
@@ -50,6 +52,24 @@ function HomeNavigatorScreen() {
   );
 }
 
+const stack = createStackNavigator();
+
+function AboutNavigatorScreen() {
+  return (
+    <stack.Navigator screenOptions={HeaderOptions}>
+      <stack.Screen name="About" component={About} />
+    </stack.Navigator>
+  );
+}
+
+function ContactNavigatorScreen() {
+  return (
+    <stack.Navigator screenOptions={HeaderOptions}>
+      <stack.Screen name="Contact" component={Contact} />
+    </stack.Navigator>
+  );
+}
+
 const MainNavigator = createDrawerNavigator();
 
 function MainNavigatorDrawer() {
@@ -59,9 +79,12 @@ function MainNavigatorDrawer() {
       drawerStyle={{
         backgroundColor: '#D1C4E9',
       }}
+      screenOptions={HeaderOptions}
     >
       <MainNavigator.Screen name="Home" component={HomeNavigatorScreen} />
       <MainNavigator.Screen name="Menu" component={MenuNavigatorScreen} />
+      <MainNavigator.Screen name="About" component={AboutNavigatorScreen} />
+      <MainNavigator.Screen name="Contact" component={ContactNavigatorScreen} />
     </MainNavigator.Navigator>
   );
 }
@@ -77,3 +100,5 @@ class Main extends Component {
 }
 
 export default Main;
+
+//! initialRouteName: The name of the route to render on first load of the navigator
