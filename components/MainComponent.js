@@ -15,6 +15,7 @@ import Dishdetail from './DishdetailComponent';
 import Home from './HomeComponent';
 import About from './AboutComponent';
 import Contact from './ContactComponent';
+import Reservation from './ReservationComponent';
 
 //!redux part
 import { connect } from 'react-redux';
@@ -152,6 +153,27 @@ function ContactNavigatorScreen() {
   );
 }
 
+function ReservationNavigatorScreen() {
+  return (
+    <stack.Navigator screenOptions={HeaderOptions}>
+      <stack.Screen
+        name="Reservation"
+        component={Reservation}
+        options={({ navigation }) => ({
+          headerLeft: () => (
+            <Icon
+              name="menu"
+              size={24}
+              color="white"
+              onPress={() => navigation.toggleDrawer()}
+            />
+          ),
+        })}
+      />
+    </stack.Navigator>
+  );
+}
+
 const CustomDrawerContentComponent = (props) => (
   <ScrollView>
     <View style={styles.drawerHeader}>
@@ -220,6 +242,20 @@ function MainNavigatorDrawer() {
           drawerIcon: ({ tintColor }) => (
             <Icon
               name="address-card"
+              type="font-awesome"
+              size={22}
+              color={tintColor}
+            />
+          ),
+        }}
+      />
+      <MainNavigator.Screen
+        name="Reserve Table"
+        component={ReservationNavigatorScreen}
+        options={{
+          drawerIcon: ({ tintColor }) => (
+            <Icon
+              name="cutlery"
               type="font-awesome"
               size={22}
               color={tintColor}
