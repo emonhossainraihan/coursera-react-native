@@ -16,6 +16,7 @@ import Home from './HomeComponent';
 import About from './AboutComponent';
 import Contact from './ContactComponent';
 import Reservation from './ReservationComponent';
+import Favorites from './FavoriteComponent';
 
 //!redux part
 import { connect } from 'react-redux';
@@ -173,6 +174,26 @@ function ReservationNavigatorScreen() {
     </stack.Navigator>
   );
 }
+function FavoritesNavigatorScreen() {
+  return (
+    <stack.Navigator screenOptions={HeaderOptions}>
+      <stack.Screen
+        name="Reservation"
+        component={Favorites}
+        options={({ navigation }) => ({
+          headerLeft: () => (
+            <Icon
+              name="menu"
+              size={24}
+              color="white"
+              onPress={() => navigation.toggleDrawer()}
+            />
+          ),
+        })}
+      />
+    </stack.Navigator>
+  );
+}
 
 const CustomDrawerContentComponent = (props) => (
   <ScrollView>
@@ -243,7 +264,21 @@ function MainNavigatorDrawer() {
             <Icon
               name="address-card"
               type="font-awesome"
-              size={22}
+              size={24}
+              color={tintColor}
+            />
+          ),
+        }}
+      />
+      <MainNavigator.Screen
+        name="My Favorites"
+        component={FavoritesNavigatorScreen}
+        options={{
+          drawerIcon: ({ tintColor }) => (
+            <Icon
+              name="heart"
+              type="font-awesome"
+              size={24}
               color={tintColor}
             />
           ),
@@ -257,7 +292,7 @@ function MainNavigatorDrawer() {
             <Icon
               name="cutlery"
               type="font-awesome"
-              size={22}
+              size={24}
               color={tintColor}
             />
           ),
