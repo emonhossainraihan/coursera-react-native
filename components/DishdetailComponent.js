@@ -23,17 +23,7 @@ const mapDispatchToProps = (dispatch) => ({
 });
 
 function RenderDish(props) {
-  const {
-    dish,
-    favorite,
-    onPress,
-    showModal,
-    handleChangeAuthor,
-    handleChangeComment,
-    toggleModal,
-    handleComment,
-    ratingCompleted,
-  } = props;
+  const { dish, favorite, onPress, toggleModal } = props;
 
   if (dish != null) {
     return (
@@ -61,60 +51,6 @@ function RenderDish(props) {
             />
           </View>
         </Card>
-        <Modal
-          animationType={'slide'}
-          transparent={false}
-          visible={showModal}
-          onDismiss={() => toggleModal()}
-          onRequestClose={() => toggleModal()}
-        >
-          <View
-            style={{
-              justifyContent: 'center',
-              margin: 20,
-            }}
-          >
-            <Rating
-              showRating
-              fractions="{1}"
-              onFinishRating={() => ratingCompleted()}
-            />
-            <Input
-              placeholder="Author"
-              leftIcon={
-                <Icon name="user" type="font-awesome" size={24} color="black" />
-              }
-              onChangeText={(value) => handleChangeAuthor(value)}
-            />
-            <Input
-              placeholder="Comment"
-              leftIcon={
-                <Icon
-                  name="comment"
-                  type="font-awesome"
-                  size={24}
-                  color="black"
-                />
-              }
-              onChangeText={(value) => handleChangeComment(value)}
-            />
-            <Button
-              onPress={() => {
-                toggleModal();
-                handleComment();
-              }}
-              color="#512DA8"
-              title="SUBMIT"
-            />
-            <Button
-              onPress={() => {
-                toggleModal();
-              }}
-              color="#808080"
-              title="CANCEL"
-            />
-          </View>
-        </Modal>
       </ScrollView>
     );
   } else {
@@ -174,6 +110,7 @@ class Dishdetail extends Component {
   toggleModal() {
     this.setState({ showModal: !this.state.showModal });
   }
+
   handleComment() {
     const dishId = parseInt(this.props.route.params.dishId, 10);
     const { author, comment, rating } = this.state;
@@ -190,17 +127,70 @@ class Dishdetail extends Component {
           favorite={this.props.favorites.some((el) => el === dishId)}
           onPress={() => this.markFavorite(dishId)}
           showModal={this.state.showModal}
-          handleChangeAuthor={(value) => this.setState({ author: value })}
-          handleChangeComment={(value) => this.setState({ comment: value })}
-          ratingCompleted={() => this.setState({ rating: this.state.rating })}
           toggleModal={() => this.toggleModal()}
-          handleComment={() => this.handleComment()}
         />
         <RenderComments
           comments={this.props.comments.comments.filter(
             (comment) => comment.dishId === dishId
           )}
         />
+        <Modal
+          animationType={'slide'}
+          transparent={false}
+          visible={this.state.showModal}
+          onDismiss={() => this.toggleModal()}
+          onRequestClose={() => this.toggleModal()}
+        >
+          <View
+            style={{
+              justifyContent: 'center',
+              margin: 20,
+            }}
+          >
+            <Rating
+              showRating
+              value={this.state.rating}
+              selectedValue={this.state.rating}
+              onFinishRating={() =>
+                this.setState({ rating: this.state.rating })
+              }
+            ></Rating>
+            <Input
+              placeholder="Author"
+              leftIcon={
+                <Icon name="user" type="font-awesome" size={24} color="black" />
+              }
+              onChangeText={(value) => this.setState({ author: value })}
+            />
+            <Input
+              placeholder="Comment"
+              leftIcon={
+                <Icon
+                  name="comment"
+                  type="font-awesome"
+                  size={24}
+                  color="black"
+                />
+              }
+              onChangeText={(value) => this.setState({ comment: value })}
+            />
+            <Button
+              onPress={() => {
+                this.toggleModal();
+                this.handleComment();
+              }}
+              color="#512DA8"
+              title="SUBMIT"
+            />
+            <Button
+              onPress={() => {
+                this.toggleModal();
+              }}
+              color="#808080"
+              title="CANCEL"
+            />
+          </View>
+        </Modal>
       </ScrollView>
     );
     //! plus turn [+dishId] an integer
