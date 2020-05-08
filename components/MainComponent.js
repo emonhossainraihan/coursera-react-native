@@ -178,7 +178,7 @@ function FavoritesNavigatorScreen() {
   return (
     <stack.Navigator screenOptions={HeaderOptions}>
       <stack.Screen
-        name="Reservation"
+        name="My Favorites"
         component={Favorites}
         options={({ navigation }) => ({
           headerLeft: () => (
