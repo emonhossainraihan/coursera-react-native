@@ -186,5 +186,5 @@ export const postComment = (author, comment, dishId, rating) => (dispatch) => {
   newComment.date = new Date().toISOString();
   setTimeout(() => {
     dispatch(addComment(newComment));
-  }, 2000);
+  }, 2000); //Simulating an async server call
 };
