@@ -1,5 +1,13 @@
 import React, { Component } from 'react';
-import { Text, View, ScrollView, FlatList, Button, Modal } from 'react-native';
+import {
+  Text,
+  View,
+  ScrollView,
+  FlatList,
+  Button,
+  Modal,
+  Share,
+} from 'react-native';
 import { Card, Icon, Rating, Input } from 'react-native-elements';
 
 import { connect } from 'react-redux';
@@ -85,6 +93,19 @@ function RenderDish(props) {
     },
   });
 
+  const shareDish = (title, message, url) => {
+    Share.share(
+      {
+        title: title,
+        message: title + ': ' + message + ' ' + url,
+        url: url,
+      },
+      {
+        dialogTitle: 'Share ' + title,
+      }
+    );
+  };
+
   if (dish != null) {
     return (
       <Animatable.View
@@ -96,9 +117,17 @@ function RenderDish(props) {
       >
         <Card featuredTitle={dish.name} image={{ uri: baseUrl + dish.image }}>
           <Text style={{ margin: 10 }}>{dish.description}</Text>
-          <View style={{ justifyContent: 'center', alignSelf: 'center' }}>
+          <View
+            style={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignSelf: 'center',
+            }}
+          >
             <Icon
               raised
+              style={{ flex: '1' }}
               reverse
               name={favorite ? 'heart' : 'heart-o'}
               type="font-awesome"
@@ -109,11 +138,23 @@ function RenderDish(props) {
             />
             <Icon
               raised
+              style={{ flex: '1' }}
               reverse
               name="pencil"
               type="font-awesome"
               color="#512DA8"
               onPress={() => toggleModal()}
+            />
+            <Icon
+              raised
+              style={{ flex: '1' }}
+              reverse
+              name="share"
+              type="font-awesome"
+              color="#51D2A8"
+              onPress={() =>
+                shareDish(dish.name, dish.description, baseUrl + dish.image)
+              }
             />
           </View>
         </Card>
