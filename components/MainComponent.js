@@ -211,6 +211,7 @@ function LoginNavigatorScreen() {
               onPress={() => navigation.toggleDrawer()}
             />
           ),
+          title: 'Login',
         })}
       />
     </stack.Navigator>
