@@ -1,13 +1,18 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Text,
   View,
+  ScrollView,
   StyleSheet,
   Picker,
   Switch,
   Button,
+  Modal,
+  SafeAreaView,
   Alert,
+  Platform,
 } from 'react-native';
+import { Card } from 'react-native-elements';
 import DatePicker from 'react-native-datepicker';
 
 //!animations
@@ -17,100 +22,185 @@ import * as Animatable from 'react-native-animatable';
 import * as Permissions from 'expo-permissions';
 import { Notifications } from 'expo';
 import * as Calendar from 'expo-calendar';
-import { Platform } from 'react-native';
 
-class Reservation extends Component {
-  constructor(props) {
-    super(props);
+const styles = StyleSheet.create({
+  formRow: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    flexDirection: 'row',
+    margin: 20,
+  },
+  formLabel: {
+    fontSize: 18,
+    flex: 2,
+  },
+  formItem: {
+    flex: 1,
+  },
+  modal: {
+    justifyContent: 'center',
+    margin: 20,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    backgroundColor: '#512DA8',
+    textAlign: 'center',
+    color: 'white',
+    marginBottom: 20,
+  },
+  modalText: {
+    fontSize: 18,
+    margin: 10,
+  },
+});
 
-    this.state = {
-      guests: 1,
-      smoking: false,
-      date: '',
-      showModal: false,
-    };
-  }
+export const Reservation = () => {
+  const [guests, setGuests] = useState(1);
+  const [smoking, setSmoking] = useState(false);
+  const [date, setDate] = useState('');
+  const [showModal, setShowModal] = useState(false);
 
-  handleReservation = () => {
-    Alert.alert(
-      'Your Reservation OK?',
-      'Number of Guests: ' +
-        this.state.guests +
-        '\n Smoking? ' +
-        this.state.smoking +
-        '\n Date and Time: ' +
-        this.state.date,
-      [
-        {
-          text: 'Cancel',
-          onPress: () => this.resetForm(),
-          style: 'cancel',
-        },
-        {
-          text: 'OK',
-          onPress: () => {
-            this.presentLocalNotification(this.state.date);
-            this.addReservationToCalendar(this.state.date);
-            this.resetForm();
-          },
-        },
-      ],
-      { cancelable: false }
-    );
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      Notifications.createChannelAndroidAsync('reservation-messages', {
+        name: 'Messages',
+        priority: 'max',
+        sound: true,
+        vibrate: [0, 250, 500, 250],
+      });
+    }
+
+    Notifications.createCategoryAsync('myCategoryName', [
+      {
+        actionId: 'openEvent',
+        buttonTitle: 'Open event in calendar',
+      },
+    ]);
+
+    Notifications.addListener(handleNotification);
+  }, []);
+
+  const toggleModal = () => setShowModal(!showModal);
+
+  const resetForm = () => {
+    setGuests(1);
+    setSmoking(false);
+    setDate('');
   };
 
-  resetForm() {
-    this.setState({
-      guests: 1,
-      smoking: false,
-      date: '',
-      showModal: false,
-    });
-  }
-
-  async obtainDefaultCalendarId() {
-    let calendar = null;
-    if (Platform.OS === 'ios') {
-      calendar = await Calendar.getDefaultCalendarAsync();
-    } else {
-      const calendars = await Calendar.getCalendarsAsync();
-      calendar = calendars
-        ? calendars.find((cal) => cal.isPrimary) || calendars[0]
-        : null;
+  const handleNotification = ({ actionId, data }) => {
+    switch (actionId) {
+      case 'openEvent':
+        Calendar.openEventInCalendar(data.eventId);
+        break;
+      default:
+        break;
     }
-    return calendar ? calendar.id.toString() : null;
-  }
+  };
 
-  async obtainCalendarPermission() {
+  const handleReservation = () => {
+    addReservationToCalendar(date);
+    resetForm();
+    // toggleModal();
+  };
+
+  const addReservationToCalendar = async (date) => {
+    await obtainCalendarPermission();
+    let calendarID = await getCalendar();
+
+    if (!calendarID) {
+      calendarID = await createCalendar();
+    }
+
+    const eventID = await Calendar.createEventAsync(calendarID, {
+      title: 'Con Fusion Table Reservation',
+      startDate: new Date(Date.parse(date)),
+      endDate: new Date(Date.parse(date) + 2 * 60 * 60 * 1000),
+      location:
+        '121, Clear Water Bay Road, Clear Water Bay, Kowloon, Hong Kong',
+      timeZone: 'Asia/Hong_Kong',
+    });
+
+    presentLocalNotification(date, eventID);
+  };
+
+  const obtainCalendarPermission = async () => {
     let permission = await Permissions.getAsync(Permissions.CALENDAR);
     if (permission.status !== 'granted') {
       permission = await Permissions.askAsync(Permissions.CALENDAR);
       if (permission.status !== 'granted') {
-        Alert.alert('Permission not granted to access the calendar');
+        Alert.alert('Permission not granted to show notifications');
       }
     }
     return permission;
-  }
+  };
 
-  async addReservationToCalendar(date) {
-    await this.obtainCalendarPermission();
-    CalendarId = this.obtainDefaultCalendarId();
-    console.log(new Date(Date.parse(date)) + 2 * 60 * 60 * 1000);
-    console.log('==================', CalendarId, '========================');
-    const startDate = new Date(Date.parse(date));
-    const endDate = new Date(Date.parse(date) + 2 * 60 * 60 * 1000);
-    Calendar.createEventAsync(CalendarId, {
-      title: 'Con Fusion Table Reservation',
-      location:
-        '121, Clear Water Bay Road, Clear Water Bay, Kowloon, Hong Kong',
-      startDate: startDate,
-      endDate: endDate,
-      timeZone: 'Asia/Hong_Kong',
+  const getCalendar = async () => {
+    const calendars = await Calendar.getCalendarsAsync(
+      Calendar.EntityTypes.EVENT
+    );
+    const calendar = calendars.find(
+      ({ title }) => title === 'Con Fusion Calendar'
+    );
+
+    if (calendar) {
+      return calendar.id;
+    } else {
+      return;
+    }
+  };
+
+  const createCalendar = async () => {
+    const defaultCalendarSource =
+      Platform.OS === 'ios'
+        ? await getDefaultCalendarSource()
+        : { isLocalAccount: true, name: 'Expo Calendar' };
+    const newCalendarID = await Calendar.createCalendarAsync({
+      title: 'Con Fusion Calendar',
+      color: 'blue',
+      entityType: Calendar.EntityTypes.EVENT,
+      sourceId: defaultCalendarSource.id,
+      source: defaultCalendarSource,
+      name: 'internalCalendarName',
+      ownerAccount: 'personal',
+      accessLevel: Calendar.CalendarAccessLevel.OWNER,
     });
-    Alert.alert('Reservation has been added to your calendar');
-  }
 
-  async obtainNotificationPermission() {
+    return newCalendarID;
+  };
+
+  const getDefaultCalendarSource = async () => {
+    const calendars = await Calendar.getCalendarsAsync();
+    const defaultCalendars = calendars.filter(
+      (each) => each.source.name === 'Default'
+    );
+    return defaultCalendars[0].source;
+  };
+
+  const presentLocalNotification = async (date, eventId) => {
+    await obtainNotificationPermission();
+    Notifications.presentLocalNotificationAsync({
+      title: 'Your Reservation',
+      body: 'Reservation for ' + date + ' requested',
+      data: {
+        eventId,
+      },
+      ios: {
+        sound: true,
+      },
+      android: {
+        channelId: 'reservation-messages',
+        sound: true,
+        vibrate: true,
+        color: '#512DA8',
+      },
+      categoryId: 'myCategoryName',
+    });
+  };
+
+  const obtainNotificationPermission = async () => {
     let permission = await Permissions.getAsync(
       Permissions.USER_FACING_NOTIFICATIONS
     );
@@ -123,35 +213,17 @@ class Reservation extends Component {
       }
     }
     return permission;
-  }
+  };
 
-  async presentLocalNotification(date) {
-    await this.obtainNotificationPermission();
-    Notifications.presentLocalNotificationAsync({
-      title: 'Your Reservation',
-      body: 'Reservation for ' + date + ' requested',
-      ios: {
-        sound: true,
-      },
-      android: {
-        sound: true,
-        vibrate: true,
-        color: '#512DA8',
-      },
-    });
-  }
-
-  render() {
-    return (
-      <Animatable.View animation="zoomIn" duration={2000} delay={1000}>
+  return (
+    <Animatable.View animation="zoomIn" duration={1000}>
+      <ScrollView>
         <View style={styles.formRow}>
           <Text style={styles.formLabel}>Number of Guests</Text>
           <Picker
             style={styles.formItem}
-            selectedValue={this.state.guests}
-            onValueChange={(itemValue, itemIndex) =>
-              this.setState({ guests: itemValue })
-            }
+            selectedValue={guests}
+            onValueChange={(itemValue) => setGuests(itemValue)}
           >
             <Picker.Item label="1" value="1" />
             <Picker.Item label="2" value="2" />
@@ -165,16 +237,16 @@ class Reservation extends Component {
           <Text style={styles.formLabel}>Smoking/Non-Smoking?</Text>
           <Switch
             style={styles.formItem}
-            value={this.state.smoking}
-            onTintColor="#512DA8"
-            onValueChange={(value) => this.setState({ smoking: value })}
+            value={smoking}
+            trackColor="#512DA8"
+            onValueChange={(value) => setSmoking(value)}
           ></Switch>
         </View>
         <View style={styles.formRow}>
           <Text style={styles.formLabel}>Date and Time</Text>
           <DatePicker
             style={{ flex: 2, marginRight: 20 }}
-            date={this.state.date}
+            date={date}
             format=""
             mode="datetime"
             placeholder="select date and Time"
@@ -192,39 +264,66 @@ class Reservation extends Component {
                 marginLeft: 36,
               },
             }}
-            onDateChange={(date) => {
-              this.setState({ date: date });
-            }}
+            onDateChange={(date) => setDate(date)}
           />
         </View>
         <View style={styles.formRow}>
           <Button
-            onPress={() => this.handleReservation()}
+            // onPress={handleReservation}
+            onPress={() =>
+              Alert.alert(
+                'Your Reservation OK?',
+                `Number of Guests: ${guests} \n Smoking? ${smoking} \n Date and Time: ${date}`,
+                [
+                  {
+                    text: 'OK',
+                    onPress: handleReservation,
+                  },
+                  {
+                    text: 'Cancel',
+                    onPress: resetForm,
+                    style: 'cancel',
+                  },
+                ],
+                { cancelable: false }
+              )
+            }
             title="Reserve"
             color="#512DA8"
             accessibilityLabel="Learn more about this purple button"
           />
         </View>
-      </Animatable.View>
-    );
-  }
-}
+        <Modal
+          animationType={'slide'}
+          transparent={false}
+          visible={showModal}
+          // onDismiss={resetForm} // Exucute after close modal
+          onRequestClose={toggleModal} // Exucute when user go back from device button
+        >
+          <SafeAreaView style={styles.container}>
+            <View style={styles.modal}>
+              <Card title="Your Reservation">
+                <Text style={styles.modalText}>Number of Guests: {guests}</Text>
+                <Text style={styles.modalText}>
+                  Smoking?: {smoking ? 'Yes' : 'No'}
+                </Text>
+                <Text style={styles.modalText}>Date and Time: {date}</Text>
 
-const styles = StyleSheet.create({
-  formRow: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    flexDirection: 'row',
-    margin: 20,
-  },
-  formLabel: {
-    fontSize: 18,
-    flex: 2,
-  },
-  formItem: {
-    flex: 1,
-  },
-});
+                <Button
+                  onPress={() => {
+                    resetForm();
+                    toggleModal();
+                  }}
+                  color="#512DA8"
+                  title="Close"
+                />
+              </Card>
+            </View>
+          </SafeAreaView>
+        </Modal>
+      </ScrollView>
+    </Animatable.View>
+  );
+};
 
 export default Reservation;
