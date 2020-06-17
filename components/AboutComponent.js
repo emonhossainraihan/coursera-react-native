@@ -12,12 +12,6 @@ import { Loading } from './LoadingComponent';
 //!animations
 import * as Animatable from 'react-native-animatable';
 
-const mapStateToProps = (state) => {
-  return {
-    leaders: state.leaders,
-  };
-};
-
 class About extends Component {
   render() {
     const renderLeader = ({ item, index }) => {
@@ -88,5 +82,11 @@ class About extends Component {
     }
   }
 }
+
+const mapStateToProps = (state) => {
+  return {
+    leaders: state.leaders,
+  };
+};
 
 export default connect(mapStateToProps)(About);
